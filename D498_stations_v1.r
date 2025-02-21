@@ -361,3 +361,111 @@ View(all_top_ten_stations_df)
 #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### 
 #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### 
 
+all_top_ten_stations_df$direction <- factor(all_top_ten_stations_df$direction, levels = c("ns", "ew"), labels = c("North-South", "East-West"))
+all_top_ten_stations_df$location <- factor(all_top_ten_stations_df$location, levels = c("chicago", "new york city", "washington"), labels = c("Chicago, IL", "New York City, NY", "Washington, D.C."))
+
+
+ggplot(all_top_ten_stations_df, aes(x = reorder(station, rank), y = count, fill = direction)) +
+  geom_bar(stat = "identity") +
+  facet_wrap(location ~ direction, scales = "free_x") +  # Split charts by direction
+  labs(title = "Top 10 Stations by Direction and Location",
+       x = "Station",
+       y = "Count") +
+  scale_y_continuous(breaks = seq(0, max(all_top_ten_stations_df$count), by = 2000)) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+
+
+#### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### 
+#### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### 
+#### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### 
+
+all_top_ten_stations_df
+
+
+cites = c("Chicago, Illinois, USA", "New York City, New York, USA", "Washington, D.C., USA")
+
+for (city in cities) {
+
+  rivers_osm_data <- opq(city) %>% add_osm_feature(key = "waterway", value = "river") %>% osmdata_sf()
+  
+  railways_osm_data <- opq(city) %>% add_osm_feature(key = "railway", value = "rail") %>% osmdata_sf()
+
+  bigstreets_osm_data <- opq(city) %>% 
+    add_osm_feature(
+      key = "highway", 
+      value = c("motorway", "trunk", "primary", "motorway_link", "trunk_link", "primary_link")) %>% 
+    osmdata_sf()
+
+  streets_osm_data <- opq(city) %>% 
+    add_osm_feature(
+      key = "highway", 
+      value = c("secondary", "tertiary", "secondary_link", "tertiary_link")) %>% 
+    osmdata_sf()
+
+  city_top_ten_ns <- all_top_ten_stations_df %>% 
+    filter(station == city_name) %>% 
+    filter(direction == "ns")
+
+  city_top_ten_ns_stations <- city_top_ten_ns$station
+
+  city_top_ten_ns_stations <- str_remove(city_top_ten_ns_stations$station, "\\b(North|South|East|West|N|S|E|W)\\b\\s*")
+  city_top_ten_ns_stations_cleaned <- str_remove(city_top_ten_ns_stations$station, "\\s+(St|Dr|Ave|Blvd|Rd)$")
+
+  top_ns_streets_list <- city_top_ten_ns_stations_cleaned$station
+
+  city_top_ten_ew <- all_top_ten_stations_df %>% 
+    filter(station == city_name) %>% 
+    filter(direction == "ew")
+
+  city_top_ten_ew_stations <- city_top_ten_ew$station
+
+  city_top_ten_ew_stations <- str_remove(city_top_ten_ew_stations$station, "\\b(North|South|East|West|N|S|E|W)\\b\\s*")
+  city_top_ten_ew_stations_cleaned <- str_remove(city_top_ten_ew_stations$station, "\\s+(St|Dr|Ave|Blvd|Rd)$")
+
+  top_ew_streets_list <- city_top_ten_ew_stations_cleaned$station
+  
+  ns_match_pattern <- paste(top_ns_streets_list, collapse = "|") 
+  ew_match_pattern <- paste(top_ew_streets_list, collapse = "|")
+
+  empty_osm <- streets_osm_data[['osm_lines']][0,]
+
+  filtered_ns_streets <- streets_osm_data[['osm_lines']] %>%
+    filter(grepl(ns_match_pattern, name))
+
+  filtered_ew_streets <- streets_osm_data[['osm_lines']] %>%
+    filter(grepl(ew_match_pattern, name))
+
+  ns_streets_osm <- bind_rows(empty_osm, filtered_ns_streets)
+
+  ew_streets_osm <- bind_rows(empty_osm, filtered_ew_streets)
+
+  rivers <- rivers_osm_data$osm_lines
+  railways <- railways_osm_data$osm_lines
+  bigstreets <- bigstreets_osm_data$osm_lines
+  streets <- streets_osm_data$osm_lines
+
+  city_name = sub(",.*", "", city)
+  city_name <- tolower(city_name)
+
+  streets_file_name = paste(city_name, "streets.gpkg", sep = "_")
+  big_streets_file_name = paste(city_name, "bigstreets.gpkg", sep="_")
+  rivers_file_name = paste(city_name, "rivers.gpkg", sep = "_")
+  railways_file_name = paste(city_name, "railways.gpkg", sep = "_")
+  ns_streets_file_name = paste(city_name, "ns_streets.gpkg", sep="_")
+  ew_streets_file_name = paste(city_name, "ew_streets.gpkg", sep="_")
+
+  # Save locally as a GeoPackage
+  st_write(streets, streets_file_name, delete_layer = TRUE)
+  st_write(bigstreets, big_streets_file_name, delete_layer = TRUE)
+  st_write(rivers, rivers_file_name, delete_layer = TRUE)
+  st_write(railways, railways_file_name, delete_layer=TRUE)
+
+  st_write(ns_streets_osm, ns_streets_file_name, delete_layer = TRUE)
+  st_write(ew_streets_osm, ew_streets_file_name, delete_layer = TRUE)
+
+}
+
+#### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### 
+#### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### 
+#### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### 
