@@ -1444,6 +1444,7 @@ ggsave(file = "Top 10 Stations By Direction and Location.pdf", units = "in", wid
 #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### 
 #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### 
 
+
 load("all_top_ten_stations_df.RData")
 
 
@@ -1480,7 +1481,8 @@ retry_request <- function(city, attempts = 3) {
 
 #cities = c("Chicago, Illinois, USA", "New York City, New York, USA", "Washington, D.C., USA")
 cities = c("Chicago, Illinois, USA", "Washington, D.C., USA")
-
+#cities = c("Chicago, Illinois, USA")
+#cities = c("Washington, D.C., USA")
 
 for (city in cities) {
   
@@ -1488,23 +1490,7 @@ for (city in cities) {
   
   city_name = sub(",.*", "", city)
   city_name <- tolower(city_name)
-
-
-#rivers_osm_data <- opq(city) %>% add_osm_feature(key = "waterway", value = "river") %>% osmdata_sf()
-
-#railways_osm_data <- opq(city) %>% add_osm_feature(key = "railway", value = "rail") %>% osmdata_sf()
-
-#bigstreets_osm_data <- opq(city) %>% 
-  #add_osm_feature(
-    #key = "highway", 
-    #value = c("motorway", "trunk", "primary", "motorway_link", "trunk_link", "primary_link")) %>% 
-  #osmdata_sf()
-
-#streets_osm_data <- opq(city) %>% 
-  #add_osm_feature(
-    #key = "highway", 
-    #value = c("secondary", "tertiary", "secondary_link", "tertiary_link")) %>% 
-  #osmdata_sf()
+  
 
   osm_data = retry_request(city)
   
@@ -1512,28 +1498,31 @@ for (city in cities) {
   railways_osm_data <- osm_data$railways_osm_data 
   bigstreets_osm_data <- osm_data$bigstreets_osm_data
   streets_osm_data <- osm_data$streets_osm_data
-  
-  city_top_ten_ns_stations <- data.frame(station = character(), cleaned.station = character(), stringsAsFactors = FALSE)
+
   
   city_top_ten_ns <- all_top_ten_stations_df %>% 
     filter(location == city_name) %>% 
-    filter(direction == "ns")
-
-  city_top_ten_ns_stations$station <- city_top_ten_ns$station
+    filter(direction == "ns") %>%
+    mutate(
+      station = as.character(station)
+    )
+  
+  city_top_ten_ns_stations <- city_top_ten_ns
   
   city_top_ten_ns_stations$station <- str_remove(city_top_ten_ns_stations$station, "\\b(North|South|East|West|N|S|E|W)\\b\\s*")
   city_top_ten_ns_stations$cleaned.station <- str_remove(city_top_ten_ns_stations$station, "\\s+(St|Dr|Ave|Blvd|Rd)$")
   
   top_ns_streets_list <- city_top_ten_ns_stations$cleaned.station
   
-  
-  city_top_ten_ew_stations <- data.frame(station = character(), cleaned.station = character(), stringsAsFactors = FALSE)
-  
+
   city_top_ten_ew <- all_top_ten_stations_df %>% 
-    filter(station == city_name) %>% 
-    filter(direction == "ew")
+    filter(location == city_name) %>% 
+    filter(direction == "ew") %>%
+    mutate(
+      station = as.character(station)
+    )
   
-  city_top_ten_ew_stations$station <- city_top_ten_ew$station
+  city_top_ten_ew_stations <- city_top_ten_ew
   
   city_top_ten_ew_stations$station <- str_remove(city_top_ten_ew_stations$station, "\\b(North|South|East|West|N|S|E|W)\\b\\s*")
   city_top_ten_ew_stations$cleaned.station <- str_remove(city_top_ten_ew_stations$station, "\\s+(St|Dr|Ave|Blvd|Rd)$")
@@ -1594,7 +1583,7 @@ for (city in cities) {
   
   rm(top_ns_streets_list)
   rm(top_ew_streets_list)
-
+  
   rm(ns_match_pattern)
   rm(ew_match_pattern)
   
@@ -1618,7 +1607,7 @@ for (city in cities) {
   rm(ew_streets_file_name)
   
 }
-  
+
 #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### 
 #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### 
 #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### 
@@ -1634,103 +1623,179 @@ rm(top_ns_streets_list)
 gc()
 
 
-
-
-
 #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### 
 #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### 
 #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### 
 
-cities = c("Chicago, Illinois, USA", "Washington, D.C., USA")
-
+cities = c("Chicago, Illinois, USA")
 
 register_google(key = "AIzaSyAXT4MOl9BvoQrx0iGYew0Uvpkhea4VVcs")
 google_key()
 
 
-#for (city in cities){
-
-city = "Chicago, Illinois, USA"
+for (city in cities){
   
-print(city)
+  #city = "Chicago, Illinois, USA"
+  
+  print(city)
+  
+  city_bb <- getbb(city)
+  
+  city_name = sub(",.*", "", city)
+  city_name <- tolower(city_name)
+  
+  #### #### #### ####  
+  
+  bigstreets_local = st_read(paste(city_name, "bigstreets.gpkg", sep="_"))
+  streets_local = st_read(paste(city_name, "streets.gpkg", sep="_"))
+  rivers_local = st_read(paste(city_name, "rivers.gpkg", sep="_"))
+  railways_local = st_read(paste(city_name, "railways.gpkg", sep="_"))
+  ns_streets_local = st_read(paste(city_name, "ns_streets.gpkg", sep="_"))
+  ew_streets_local = st_read(paste(city_name, "ew_streets.gpkg", sep="_"))
+  
+  #### #### #### ####  
+  
+  min_long <- city_bb[1,1]
+  max_long <- city_bb[1,2]
+  
+  min_lat <- city_bb[2,1]
+  max_lat <- city_bb[2,2]
 
-city_bb <- getbb(city)
+  #### #### #### ####  
+  
+  ggplot() +
+    geom_sf(data = rivers_local, inherit.aes = FALSE,color = "steelblue", size = 0.8, alpha = 0.3) +
+    geom_sf(data = railways_local, inherit.aes = FALSE,color = "grey", size = 0.2, linetype = "dotdash", alpha = 0.3) +
+    geom_sf(data = bigstreets_local, inherit.aes = FALSE, color = "black", size = 0.5, alpha = 0.6) +
+    geom_sf(data = streets_local, inherit.aes = FALSE,color = "black", size = 0.3, alpha = 0.5) +
+    geom_sf(data = ns_streets_local, inherit.aes = FALSE, color = "red", size = 2, alpha = 1) + 
+    geom_sf(data = ew_streets_local, inherit.aes = FALSE, color = "blue", size = 2, alpha = 1) +
+    coord_sf(xlim = c(min_long, max_long), 
+             ylim = c(min_lat,  max_lat)) +
+    theme_minimal() +
+    ggtitle(paste(str_to_title(city_name), "OSM Streets (Local GeoPackage)", sep=" "))
+  
+  #### #### #### ####  
+  
+  ggsave_osm_file_name = paste(city_name, "osm_most_used_stations.pdf", sep="_")
+  
+  #### #### #### ####  
+  
+  ggsave(file = ggsave_osm_file_name, units = "in", width = 6, height = 7)
+  
+  
+  #### #### #### #### #### #### #### #### 
+  #### #### #### #### #### #### #### #### 
+  #### #### #### #### #### #### #### #### 
+  
+  gmap_city_map <- get_map(city_bb, maptype = "roadmap")
 
-city_name = sub(",.*", "", city)
-city_name <- tolower(city_name)
-
-bigstreets_local = st_read(paste(city_name, "bigstreets.gpkg", sep="_"))
-streets_local = st_read(paste(city_name, "streets.gpkg", sep="_"))
-rivers_local = st_read(paste(city_name, "rivers.gpkg", sep="_"))
-railways_local = st_read(paste(city_name, "railways.gpkg", sep="_"))
-ns_streets_local = st_read(paste(city_name, "ns_streets.gpkg", sep="_"))
-ew_streets_local = st_read(paste(city_name, "ew_streets.gpkg", sep="_"))
-
-min_long <- city_bb[1,1]
-max_long <- city_bb[1,2]
-
-min_lat <- city_bb[2,1]
-max_lat <- city_bb[2,2]
-
-ggplot() +
-  geom_sf(data = rivers_local, inherit.aes = FALSE,color = "steelblue", size = 0.8, alpha = 0.3) +
-  geom_sf(data = railways_local, inherit.aes = FALSE,color = "grey", size = 0.2, linetype = "dotdash", alpha = 0.3) +
-  geom_sf(data = bigstreets_local, inherit.aes = FALSE, color = "black", size = 0.5, alpha = 0.6) +
-  geom_sf(data = streets_local, inherit.aes = FALSE,color = "black", size = 0.3, alpha = 0.5) +
-  geom_sf(data = ns_streets_local, inherit.aes = FALSE, color = "red", size = 2, alpha = 1) + 
-  geom_sf(data = ew_streets_local, inherit.aes = FALSE, color = "blue", size = 2, alpha = 1) +
-  coord_sf(xlim = c(min_long, max_long), 
-          ylim = c(min_lat,  max_lat)) +
-  theme_minimal() +
-  ggtitle(paste(str_to_title(city_name), "OSM Streets (Local GeoPackage)", sep=" "))
-
-ggsave_file_name = paste(city_name, "most_used_stations.pdf", sep="_")
-
-ggsave(file = ggsave_file_name, units = "in", width = 6, height = 7)
-
-#### #### #### #### #### #### #### ####  
-
-city = "Washington, D.C., USA"
-
-print(city)
-
-city_bb <- getbb(city)
-
-city_name = sub(",.*", "", city)
-city_name <- tolower(city_name)
-
-bigstreets_local = st_read(paste(city_name, "bigstreets.gpkg", sep="_"))
-streets_local = st_read(paste(city_name, "streets.gpkg", sep="_"))
-rivers_local = st_read(paste(city_name, "rivers.gpkg", sep="_"))
-railways_local = st_read(paste(city_name, "railways.gpkg", sep="_"))
-ns_streets_local = st_read(paste(city_name, "ns_streets.gpkg", sep="_"))
-ew_streets_local = st_read(paste(city_name, "ew_streets.gpkg", sep="_"))
-
-min_long <- city_bb[1,1]
-max_long <- city_bb[1,2]
-
-min_lat <- city_bb[2,1]
-max_lat <- city_bb[2,2]
-
-ggplot() +
-  geom_sf(data = rivers_local, inherit.aes = FALSE,color = "steelblue", size = 0.8, alpha = 0.3) +
-  geom_sf(data = railways_local, inherit.aes = FALSE,color = "grey", size = 0.2, linetype = "dotdash", alpha = 0.3) +
-  geom_sf(data = bigstreets_local, inherit.aes = FALSE, color = "black", size = 0.5, alpha = 0.6) +
-  geom_sf(data = streets_local, inherit.aes = FALSE,color = "black", size = 0.3, alpha = 0.5) +
-  geom_sf(data = ns_streets_local, inherit.aes = FALSE, color = "red", size = 2, alpha = 1) + 
-  geom_sf(data = ew_streets_local, inherit.aes = FALSE, color = "blue", size = 2, alpha = 1) +
-  coord_sf(xlim = c(min_long, max_long), 
-           ylim = c(min_lat,  max_lat)) +
-  theme_minimal() +
-  ggtitle(paste(str_to_title(city_name), "OSM Streets (Local GeoPackage)", sep=" "))
-
-ggsave_file_name = paste(city_name, "most_used_stations.pdf", sep="_")
-
-ggsave(file = ggsave_file_name, units = "in", width = 6, height = 7)
+  #### #### #### ####  
+    
+  ggmap(gmap_city_map) +
+    geom_sf(data = ns_streets_local, inherit.aes = FALSE, color = "red", size = 2, alpha = 1) + 
+    geom_sf(data = ew_streets_local, inherit.aes = FALSE, color = "blue", size = 2, alpha = 1) +
+    coord_sf(xlim = c(min_long, max_long), 
+             ylim = c(min_lat,  max_lat)) +
+    theme_minimal() +
+    ggtitle(paste(str_to_title(city_name), "GGMap OSM Streets (Local GeoPackage)", sep=" "))
+  
+  #### #### #### #### #### #### #### #### 
+  
+  ggsave_gmap_file_name = paste(city_name, "ggmap_most_used_stations.pdf", sep="_")
+  
+  #### #### #### ####  
+  
+  ggsave(file = ggsave_gmap_file_name, units = "in", width = 6, height = 7)
+  
+}
 
 
 #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### 
 #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### 
 #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### 
 
+load("all_top_ten_stations_df.RData")
+
+cities = c("Chicago, Illinois, USA", "New York City, New York, USA", "Washington, D.C., USA")
+
+for (city in cities) {
+  #city = "chicago"
+  
+  print(city)
+  
+  #city_bb <- getbb(city)
+  
+  city_name = sub(",.*", "", city)
+  city_name <- tolower(city_name)
+  
+  
+  
+  city_top_three_ns <- all_top_ten_stations_df %>% 
+    filter(location == city_name) %>% 
+    filter(direction == "ns") %>%
+    mutate(
+      station = as.character(station)
+    ) %>% 
+    top_n(3)
+  
+  
+  city_top_three_ns_stations <- city_top_three_ns
+  
+  #city_top_three_ns_stations$station <- str_remove(city_top_three_ns_stations$station, "\\b(North|South|East|West|N|S|E|W)\\b\\s*")
+  #city_top_three_ns_stations$cleaned.station <- str_remove(city_top_three_ns_stations$station, "\\s+(St|Dr|Ave|Blvd|Rd)$")
+  
+  #top_ns_streets_list <- city_top_three_ns_stations$cleaned.station
+  top_ns_streets_list <- city_top_three_ns_stations$station
+  
+  city_top_three_ew <- all_top_ten_stations_df %>% 
+    filter(location == city_name) %>% 
+    filter(direction == "ew") %>%
+    mutate(
+      station = as.character(station)
+    ) %>% 
+    top_n(3)
+  
+  city_top_three_ew_stations <- city_top_three_ew
+  
+  #city_top_three_ew_stations$station <- str_remove(city_top_three_ew_stations$station, "\\b(North|South|East|West|N|S|E|W)\\b\\s*")
+  #city_top_three_ew_stations$cleaned.station <- str_remove(city_top_three_ew_stations$station, "\\s+(St|Dr|Ave|Blvd|Rd)$")
+  
+  #top_ew_streets_list <- city_top_three_ew_stations$cleaned.station
+  top_ew_streets_list <- city_top_three_ew_stations$station
+  
+  # Define street names and rankings
+  #north_south <- c("1st Ave", "2nd Ave", "3rd Ave")
+  #east_west <- c("1st St", "2nd St", "3rd St")
+  
+  # Create data frame with rank values
+  df <- expand.grid(North_South = top_ns_streets_list, East_West = top_ew_streets_list)
+  df$Rank <- c(1, 2, 4, 
+               2, 3, 5, 
+               4, 5, 6)  # Follows your ranking pattern
+  
+  
+  df$North_South <- factor(df$North_South, levels = rev(north_south))
+  df$East_West <- factor(df$East_West, levels = rev(east_west))
+  
+  # Create the heatmap
+  ggplot(df, aes(x = East_West, y = North_South, fill = Rank)) +
+    geom_tile(color = "white") +
+    geom_text(aes(label = Rank), color = "black", size = 6) +
+    scale_fill_gradient(low = "blue", high = "white") +
+    labs(title = "Street Intersection Rankings", x = "East-West Streets", y = "North-South Streets") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  
+  ggsave_heatmap_file_name = paste(city_name, "heatmap_matrix_most_used_stations.pdf", sep="_")
+  
+  
+  ggsave(file = ggsave_heatmap_file_name, units = "in", width = 6, height = 7)
+  
+}
+
+
+#### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### 
+#### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### 
+#### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### 
 
