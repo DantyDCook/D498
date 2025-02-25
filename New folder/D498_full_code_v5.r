@@ -44,6 +44,57 @@ library(tidyverse)
 #### #### #### #### #### #### #### #### 
 #### #### #### #### #### #### #### #### 
 
+# https://developers.lseg.com/en/article-catalog/article/setup-jupyter-notebook-r
+# https://kilnofthesecondflame.github.io/python/jupyter-notebook/kernel/installing-venv-R-kernel/
+# https://alexweston013.medium.com/how-to-set-up-an-r-python-virtual-environment-using-renv-483f67d76206
+# https://ipython.readthedocs.io/en/stable/install/kernel_install.html
+# https://stackoverflow.com/questions/59214819/use-python-virtual-environment-in-jupyter-notebook
+
+
+#https://stackoverflow.com/questions/63631947/r-check-list-of-packages-then-load-or-install
+
+dir.create("~/Rlibs", showWarnings = FALSE)
+.libPaths("~/Rlibs")
+
+# Declare packages
+packages <- c("stringr","dplyr","ggplot2", "lubridate", "tidyr", "osmdata", "sf", "ggmap", "httr2", "igraph", "ggraph", "tidyverse")
+
+# Loop through each package
+for (package %in% packages) {
+    
+    # Install package
+    # Note: `installed.packages()` returns a vector of all the installed packages
+    if (!(package %in% installed.packages())) {
+        
+        # Install it
+        install.packages(
+            package,
+            #lib.loc = "~/Rlibs",
+            dependencies = TRUE
+        )
+        
+    }
+    
+    # Load package
+    # Note: `.packages()` returns a vector of all the loaded packages
+    if (!(package %in% .packages())) {
+        
+        # Load it
+        library(
+            package,
+            #lib.loc = "~/Rlibs",
+            character.only = TRUE
+        )
+        
+    }
+    
+}
+
+
+#### #### #### #### #### #### #### #### 
+#### #### #### #### #### #### #### #### 
+#### #### #### #### #### #### #### #### 
+
 setwd("D:/WGU/D498/D498/")
 getwd()
 
@@ -228,9 +279,6 @@ levels(washington$User.Type)
 # "Customer"
 # "Subscriber"
 
-washington$User.Type <- factor(washington$User.Type, levels =c("", "Female", "Male"))
-
-
 # Capturing the 'levels' of the 'Gender' column data to confirm the factor data type change was successful.. 
 levels(washington$Gender)
 
@@ -285,7 +333,8 @@ chicago <- add_location_column(chicago, "chicago")
 # Visual Confirmation addition was successful. It was. 
 View(chicago)
 
-#Adding locations to the other two data sets. 
+
+# Function worked successful. Let's apply it to the other two datasets. 
 
 new_york_city <- add_location_column(new_york_city, "new york city")
 
@@ -303,22 +352,21 @@ bikeshare_main_df <- rbind(chicago, new_york_city)
 # Combining the new data set created with the last dataset to have a singular data set. 
 bikeshare_main_df <- rbind(bikeshare_main_df, washington)
 
-# Converting the 'location' column data to a factor
-bikeshare_main_df$location <- as.factor(bikeshare_main_df$location)
-
-# Verifying the Structure of the new data set. 
-str(bikeshare_main_df)
 
 # Getting dimensions
 dim(bikeshare_main_df)
 
-# Visual inspection
-sample(bikeshare_main_df)
+# Verifying the Structure of the new data set. 
+str(bikeshare_main_df)
 
-head(bikeshare_main_df)
+# Converting the 'location' column data to a factor
+bikeshare_main_df$location <- as.factor(bikeshare_main_df$location)
 
 # Confirm level update
 levels(bikeshare_main_df$location)
+
+# Visual inspection
+head(bikeshare_main_df)
 
 #### #### #### #### #### #### #### #### 
 #### #### #### #### #### #### #### #### 
@@ -328,16 +376,9 @@ levels(bikeshare_main_df$location)
 
 bikeshare_main_df <- bikeshare_main_df %>% rename(ride_id = X)
 
-# Make this change on our original data set's as well 
-
-chicago <- chicago %>% rename(ride_id = X)
-new_york_city <- new_york_city %>% rename(ride_id = X)
-washington <- washington %>% rename(ride_id = X)
-
-
 #### #### #### #### #### #### #### #### 
 
-# Let's also convert all column names to lowercase too
+# While we are renaming the columns, let's also convert all column names to lowercase too
 
 normalize_column_names <- function(dataframe){
   colnames(dataframe) <- tolower(colnames(dataframe))
@@ -354,8 +395,20 @@ str(bikeshare_main_df)
 
 #### #### #### #### 
 
-# Let's apply to all to original data frame's as well to maintain uniformity. 
+# Visual inspection
+sample(bikeshare_main_df)
 
+#### #### #### #### 
+
+# Now that we've finished the cleanup and combination of the data into a single datset. 
+# Let's go back and apply column rename and normalization function to the original datasets as well.
+
+# Column Rename
+chicago <- chicago %>% rename(ride_id = X)
+new_york_city <- new_york_city %>% rename(ride_id = X)
+washington <- washington %>% rename(ride_id = X)
+
+# Column name normalization 
 chicago <- normalize_column_names(chicago)
 new_york_city <- normalize_column_names(new_york_city)
 washington <- normalize_column_names(washington)
@@ -368,7 +421,7 @@ washington <- normalize_column_names(washington)
 #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### 
 #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### ####
 
-# All code above creates the formated, combinded dataset that will be used for all questions moving forward. 
+# Creating a cleaned datasets and the new combined dataset as a checkpoint.
 
 save(bikeshare_main_df, file = "bikeshare_main_df.RData")
 
@@ -376,19 +429,42 @@ save(chicago, file = "chicago_dataframe_cleaned.RData")
 save(new_york_city, file = "new_york_city_dataframe_cleaned.RData")
 save(washington, file = "washington_dataframe_cleaned.RData")
 
+#### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### 
+#### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### 
+#### #### #### #### #### #### #### #### #### #### #### #### #### #### #### ####
+
+# housekeep for performance and stablity. 
+
+# Removing objects
+# New datasets
+rm("bikeshare_main_df")
+
+# original dataset
 rm("chicago")
 rm("new_york_city")
 rm("washington")
 
+# functions
+rm(normalize_column_names)
+rm(add_location_column)
+
+
+#### #### #### #### #### #### #### #### #### #### #### #### #### #### #### ####
+
+# Garbage collection
 gc()
 
+#### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### 
+#### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### 
+#### #### #### #### #### #### #### #### #### #### #### #### #### #### #### ####
+#### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### 
+#### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### 
+#### #### #### #### #### #### #### #### #### #### #### #### #### #### #### ####
 
-#### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### 
-#### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### 
-#### #### #### #### #### #### #### #### #### #### #### #### #### #### #### ####
-#### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### 
-#### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### 
-#### #### #### #### #### #### #### #### #### #### #### #### #### #### #### ####
+# Question 1
+
+# Let's load the newly created central/single dataset back from the working directory.
+load('bikeshare_main_df.RData')
 
 # Create a new dataframe for common timeframes questions
 # Dataframe will be a subset of the 'bikeshare_main_df' with only the locaiton, ride_id, start.time, and end.time columns
@@ -411,26 +487,29 @@ dim(common_timeframes_df)
 # Create a "Month" Column and populate with the month value from the 'start.time' field. 
 common_timeframes_df$month <- month(bikeshare_main_df$start.time)
     
-
 # Create a 'multi.day' column, and populate it with a boolean value for whether or not the ride was started and ended on the same day. 
 common_timeframes_df$multi.day <- as.factor(day(common_timeframes_df$start.time) != day(common_timeframes_df$end.time))
 
 #### #### #### #### #### #### #### #### 
 
+# Create a new dataframe called "multi_day_rides" created from the filtering the 'multi.day' column for 'True'
 multi_day_rides <- common_timeframes_df %>%
   filter(multi.day == TRUE)
   
 #### #### #### #### 
 
+# Visual Inspection
 View(multi_day_rides)
 
 #### #### #### #### #### #### #### #### 
 
+# Create a new dataframe called "single_day_rides" created from the filtering the 'multi.day' column for 'False'
 single_day_rides <- common_timeframes_df %>%
   filter(multi.day == FALSE)
 
 #### #### #### #### 
 
+# Visual Inspection
 View(single_day_rides)
 
 
@@ -2123,6 +2202,7 @@ ggplot(all_trips, (aes(x = location, y=trip_duration_minutes, fill = user.type))
          ) + 
          theme_minimal() + 
          facet_wrap(~user.type, scales = "free")
+
 
 
 #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### 
