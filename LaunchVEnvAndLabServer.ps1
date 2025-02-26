@@ -29,11 +29,7 @@ if (-Not (Test-Path -Path "\virtual_envs\D498_Project_R_venv\")) {
 #.\\Test\D498_Project_R_Test_venv\Scripts\Activate.ps1
 
 # Install Python Requirements
-#python -m pip install -r requirements.txt
-
-python pip install jupyterlab
-
-python pip install ipykernel
+python -m pip install -r requirements.txt
 
 #python -m ipython kernel install --user --name=D498_Project_R_venv
 python -m ipython kernel install --user --name=D498_Project_R_venv
