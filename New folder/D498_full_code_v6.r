@@ -2224,15 +2224,17 @@ for (city in cities) {
 #### #### #### #### #### #### #### #### 
 #### #### #### #### #### #### #### #### 
 
-cites = c("chicago", "new york city", "washington")
+cities = c("chicago", "new york city", "washington")
 
 for (city in cities) {
-  stats_edge_data <- plot_hierarchical_edge_bundling %>%
+    stats_edge_data <- plot_hierarchical_edge_bundling %>%
     group_by(location, start.station, end.station) %>%
-    summarise(count = n(), .groups = "drop")
-    
-  print(str_to_title(city))
-  print(stats_edge_data)
+    summarise(count = n(), .groups = "drop") %>%
+    arrange(desc(count))
+
+    print(str_to_title(city))
+    print(stats_edge_data)
+}
   
 }
 
