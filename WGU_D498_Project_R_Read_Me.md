@@ -148,3 +148,19 @@ If successful, you should now see the name of the newly created virtual envirnme
 7. After this I restarted jupyter and verifeid it was working. 
 
 > NOTE: It may be necessary to add the R excecutable path to your windows path environment variables as well. 
+
+
+# Google Maps API Key
+
+The map-dependent cells (anything using `ggmap::register_google()`) require a Google Maps API key supplied via an environment variable — no key is hardcoded in the notebook or scripts.
+
+1. Copy `.env.example` to `.env` (or otherwise set the variable in your shell/session) and fill in your own key:
+    ```
+        GOOGLE_MAPS_API_KEY=your-key-here
+    ```
+2. Set it as a system/session environment variable before launching R or JupyterLab, for example in PowerShell:
+    ```
+        $env:GOOGLE_MAPS_API_KEY = "your-key-here"
+    ```
+3. The R code reads it with `Sys.getenv("GOOGLE_MAPS_API_KEY")` and will stop with an error if it is not set. Get your own key from the [Google Cloud Console](https://console.cloud.google.com/google/maps-apis).
+

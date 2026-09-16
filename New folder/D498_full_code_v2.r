@@ -1644,7 +1644,13 @@ gc()
 cities = c("Chicago, Illinois, USA", "Washington, D.C., USA")
 
 
-register_google(key = "AIzaSyAXT4MOl9BvoQrx0iGYew0Uvpkhea4VVcs")
+gmaps_key <- Sys.getenv("GOOGLE_MAPS_API_KEY")
+if (identical(gmaps_key, "")) {
+  stop(
+    "GOOGLE_MAPS_API_KEY is not set. Configure it locally before running map-dependent cells."
+  )
+}
+register_google(key = gmaps_key)
 google_key()
 
 
