@@ -154,13 +154,13 @@ If successful, you should now see the name of the newly created virtual envirnme
 
 The map-dependent cells (anything using `ggmap::register_google()`) require a Google Maps API key supplied via an environment variable — no key is hardcoded in the notebook or scripts.
 
-1. Copy `.env.example` to `.env` (or otherwise set the variable in your shell/session) and fill in your own key:
+1. Set `GOOGLE_MAPS_API_KEY` in the environment before launching R or JupyterLab. For example, in PowerShell:
+    ```powershell
+    $env:GOOGLE_MAPS_API_KEY = "your-key-here"
     ```
-        GOOGLE_MAPS_API_KEY=your-key-here
+2. For R sessions, you can instead place the variable in an untracked `.Renviron` file and restart R:
     ```
-2. Set it as a system/session environment variable before launching R or JupyterLab, for example in PowerShell:
+    GOOGLE_MAPS_API_KEY=your-key-here
     ```
-        $env:GOOGLE_MAPS_API_KEY = "your-key-here"
-    ```
-3. The R code reads it with `Sys.getenv("GOOGLE_MAPS_API_KEY")` and will stop with an error if it is not set. Get your own key from the [Google Cloud Console](https://console.cloud.google.com/google/maps-apis).
+3. The project code reads the variable directly with `Sys.getenv("GOOGLE_MAPS_API_KEY")` and stops with an error when it is unset. It does **not** load `.env` files automatically; `.env.example` is only a safe template/reference unless you explicitly load or export it yourself. Get your own key from the [Google Cloud Console](https://console.cloud.google.com/google/maps-apis).
 

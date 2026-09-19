@@ -15,7 +15,6 @@ if (identical(gmaps_key, "")) {
   )
 }
 register_google(key = gmaps_key)
-google_key()
 
 # Define city and get OSM data
 #city <- "Chicago, Illinois, USA"
