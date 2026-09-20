@@ -1636,7 +1636,6 @@ if (identical(gmaps_key, "")) {
   )
 }
 register_google(key = gmaps_key)
-google_key()
 
 
 for (city in cities){
